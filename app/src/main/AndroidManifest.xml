@@ -6,7 +6,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application>
-        <activity android:name=".MainActivity" />
+        <activity
+            android:name=".MainActivity"
+            android:theme="@android:style/Theme.NoDisplay" />
     </application>
 
 </manifest>
