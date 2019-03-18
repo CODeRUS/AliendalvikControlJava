@@ -80,8 +80,12 @@ public class MainActivity extends Activity {
 
                         }
 
+
                         JSONObject resolveObject = new JSONObject();
                         resolveObject.put("packageName", packageName);
+
+                        final Intent launchIntent = pm.getLaunchIntentForPackage(packageName);
+                        resolveObject.put("launcherClass", launchIntent.getComponent().getClassName());
 
                         resolveObject.put("mimeType", mimeType);
                         resolveObject.put("fileName", fileName);
