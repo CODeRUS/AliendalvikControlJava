@@ -57,8 +57,12 @@ public class MainActivity extends Activity {
             json.put("command", command);
             switch (command) {
                 case "sharing":
-                    final String fileName = receivedIntent.getStringExtra(Intent.EXTRA_STREAM);
-                    final String data = receivedIntent.getStringExtra(Intent.EXTRA_TEXT);
+                    final Uri fileUrl = receivedIntent.getParcelableExtra(Intent.EXTRA_STREAM);
+                    String fileName = fileUrl == null ? new String() : fileUrl.toString();
+                    String data = receivedIntent.getStringExtra(Intent.EXTRA_TEXT);
+                    if (data == null) {
+                        data = new String();
+                    }
                     final String mimeType = receivedIntent.getType();
 
                     PackageManager pm = getPackageManager();
