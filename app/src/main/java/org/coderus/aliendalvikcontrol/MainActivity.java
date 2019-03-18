@@ -8,18 +8,35 @@ import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.util.Base64;
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 
 public class MainActivity extends Activity {
     private static final String TAG = "MainActivity";
     private Intent receivedIntent = null;
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        finish();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,28 +52,70 @@ public class MainActivity extends Activity {
         receivedIntent.removeExtra("command");
         receivedIntent.setComponent(null);
 
-        String result = command;
+        JSONObject json = new JSONObject();
+        try {
+            json.put("command", command);
+            switch (command) {
+                case "sharing":
+                    final String fileName = receivedIntent.getStringExtra(Intent.EXTRA_STREAM);
+                    final String data = receivedIntent.getStringExtra(Intent.EXTRA_TEXT);
+                    final String mimeType = receivedIntent.getType();
 
-        switch (command) {
-            case "sharing":
-                PackageManager pm = getPackageManager();
-                List<ResolveInfo> resolveInfoList = pm.queryIntentActivities(receivedIntent, 0);
-                for (ResolveInfo resolveInfo : resolveInfoList) {
-                    Log.w(TAG, resolveInfo.loadLabel(pm).toString());
-                }
-                if (resolveInfoList.isEmpty()) {
-                    result = "empty";
-                } else {
-                    result = resolveInfoList.get(0).loadLabel(pm).toString();
-                }
-                break;
-            default:
-                break;
+                    PackageManager pm = getPackageManager();
+                    List<ResolveInfo> resolveInfoList = pm.queryIntentActivities(receivedIntent, 0);
+                    JSONArray array = new JSONArray();
+                    for (ResolveInfo resolveInfo : resolveInfoList) {
+                        final String packageName = resolveInfo.activityInfo.packageName;
+                        switch (packageName) {
+                            case "com.android.bluetooth":
+                            case "com.myriadgroup.nativeapp.email":
+                            case "com.myriadgroup.nativeapp.messages":
+                                continue;
+                            default:
+                                break;
+
+                        }
+
+                        JSONObject resolveObject = new JSONObject();
+                        resolveObject.put("packageName", packageName);
+
+                        resolveObject.put("mimeType", mimeType);
+                        resolveObject.put("fileName", fileName);
+                        resolveObject.put("data", data);
+
+                        final String label = resolveInfo.loadLabel(pm).toString();
+                        Log.w(TAG, "Resolved application: " + packageName + " label: " + label);
+                        resolveObject.put("prettyName", label);
+
+                        final String className = resolveInfo.activityInfo.name;
+                        resolveObject.put("className", className);
+
+                        Drawable icon = resolveInfo.loadIcon(pm);
+                        final Bitmap bmp = Bitmap.createBitmap(icon.getIntrinsicWidth(), icon.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+                        final Canvas canvas = new Canvas(bmp);
+                        icon.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+                        icon.draw(canvas);
+                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                        bmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                        final String iconString = Base64.encodeToString(stream.toByteArray(), Base64.DEFAULT);
+                        resolveObject.put("icon", iconString);
+
+                        array.put(resolveObject);
+                    }
+                    json.put("candidates", array);
+
+                    break;
+                default:
+                    break;
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
 
+        String result = json.toString();
         Log.w(TAG, "Result: " + result);
         String ret = Native.reply(result);
-        Log.w(TAG, "Return: " + ret);
+        Log.w(TAG, "Native result: " + ret);
 
         finish();
     }
