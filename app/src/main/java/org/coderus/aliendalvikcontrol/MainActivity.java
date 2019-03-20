@@ -8,6 +8,7 @@ import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
@@ -47,6 +48,8 @@ public class MainActivity extends Activity {
 
         String command = receivedIntent.getStringExtra("command");
         Log.w(TAG, "Command: " + command);
+
+        final Context context = getApplicationContext();
 
         // clean intent
         receivedIntent.removeExtra("command");
@@ -112,6 +115,20 @@ public class MainActivity extends Activity {
                     }
                     json.put("candidates", array);
 
+                    break;
+                case "deviceInfo":
+                    JSONObject deviceProperties = new JSONObject();
+
+                    Resources resources = context.getResources();
+                    final int resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android");
+                    int navbarHeight = 0;
+                    if (resourceId > 0) {
+                        navbarHeight = resources.getDimensionPixelSize(resourceId);
+                    }
+
+                    deviceProperties.put("navbarHeight", navbarHeight);
+
+                    json.put("deviceProperties", deviceProperties);
                     break;
                 default:
                     break;
