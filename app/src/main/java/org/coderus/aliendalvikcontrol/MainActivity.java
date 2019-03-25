@@ -14,6 +14,7 @@ import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -26,6 +27,7 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.Properties;
 
 
 public class MainActivity extends Activity {
@@ -129,6 +131,7 @@ public class MainActivity extends Activity {
                     deviceProperties.put("navbarHeight", navbarHeight);
 
                     json.put("deviceProperties", deviceProperties);
+                    json.put("api", Build.VERSION.SDK_INT);
                     break;
                 default:
                     break;
