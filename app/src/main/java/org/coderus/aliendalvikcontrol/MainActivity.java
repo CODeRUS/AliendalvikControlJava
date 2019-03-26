@@ -70,6 +70,7 @@ public class MainActivity extends Activity {
                         switch (packageName) {
                             case "org.coderus.aliendalvikcontrol":
                             case "com.android.bluetooth":
+                            case "com.myriadgroup.nativeapp":
                             case "com.myriadgroup.nativeapp.email":
                             case "com.myriadgroup.nativeapp.messages":
                                 continue;
@@ -78,10 +79,14 @@ public class MainActivity extends Activity {
 
                         }
 
+                        final Intent launchIntent = pm.getLaunchIntentForPackage(packageName);
+                        if (launchIntent == null) {
+                            continue;
+                        }
+
                         JSONObject resolveObject = new JSONObject();
                         resolveObject.put("packageName", packageName);
 
-                        final Intent launchIntent = pm.getLaunchIntentForPackage(packageName);
                         resolveObject.put("launcherClass", launchIntent.getComponent().getClassName());
 
                         resolveObject.put("mimeType", mimeType);
