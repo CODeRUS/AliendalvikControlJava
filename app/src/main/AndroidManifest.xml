@@ -1,11 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.coderus.aliendalvikcontrol">
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.INTERNET" />
 
     <application>
+        <activity
+            android:name=".SharingActivity"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter
+                android:icon="@drawable/ic_sharing"
+                android:label="Sailfish OS">
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="*/*" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".MainActivity"
             android:theme="@android:style/Theme.NoDisplay" />

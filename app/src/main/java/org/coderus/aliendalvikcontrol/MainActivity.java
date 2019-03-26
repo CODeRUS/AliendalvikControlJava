@@ -1,23 +1,17 @@
 package org.coderus.aliendalvikcontrol;
 
 import android.app.Activity;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.IBinder;
-import android.os.RemoteException;
 import android.util.Base64;
 import android.util.Log;
 
@@ -29,10 +23,8 @@ import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.Properties;
 
-
 public class MainActivity extends Activity {
     private static final String TAG = "MainActivity";
-    private Intent receivedIntent = null;
 
     @Override
     protected void onStart() {
@@ -45,7 +37,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        receivedIntent = getIntent();
+        final Intent receivedIntent = getIntent();
         Log.w(TAG, receivedIntent.toString());
 
         String command = receivedIntent.getStringExtra("command");
@@ -61,7 +53,7 @@ public class MainActivity extends Activity {
         try {
             json.put("command", command);
             switch (command) {
-                case "sharing":
+                case "sharing": {
                     final Uri fileUrl = receivedIntent.getParcelableExtra(Intent.EXTRA_STREAM);
                     String fileName = fileUrl == null ? new String() : fileUrl.toString();
                     String data = receivedIntent.getStringExtra(Intent.EXTRA_TEXT);
@@ -76,6 +68,7 @@ public class MainActivity extends Activity {
                     for (ResolveInfo resolveInfo : resolveInfoList) {
                         final String packageName = resolveInfo.activityInfo.packageName;
                         switch (packageName) {
+                            case "org.coderus.aliendalvikcontrol":
                             case "com.android.bluetooth":
                             case "com.myriadgroup.nativeapp.email":
                             case "com.myriadgroup.nativeapp.messages":
@@ -84,7 +77,6 @@ public class MainActivity extends Activity {
                                 break;
 
                         }
-
 
                         JSONObject resolveObject = new JSONObject();
                         resolveObject.put("packageName", packageName);
@@ -118,7 +110,8 @@ public class MainActivity extends Activity {
                     json.put("candidates", array);
 
                     break;
-                case "deviceInfo":
+                }
+                case "deviceInfo": {
                     JSONObject deviceProperties = new JSONObject();
 
                     Resources resources = context.getResources();
@@ -129,12 +122,29 @@ public class MainActivity extends Activity {
                     }
 
                     deviceProperties.put("navbarHeight", navbarHeight);
+                    deviceProperties.put("api", Build.VERSION.SDK_INT);
 
                     json.put("deviceProperties", deviceProperties);
                     json.put("api", Build.VERSION.SDK_INT);
                     break;
-                default:
+                }
+                case "launchApp": {
+                    final String packageName = receivedIntent.getStringExtra(Intent.EXTRA_TEXT);
+                    if (packageName == null) {
+                        break;
+                    }
+                    JSONObject launchParameters = new JSONObject();
+                    PackageManager pm = getPackageManager();
+                    final Intent launchIntent = pm.getLaunchIntentForPackage(packageName);
+                    launchParameters.put("packageName", packageName);
+                    launchParameters.put("className", launchIntent.getComponent().getClassName());
+                    json.put("launchParameters", launchParameters);
                     break;
+                }
+                default: {
+                    Log.w(TAG, "Unhandled command type (old helper version?): " + command);
+                    break;
+                }
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -147,11 +157,4 @@ public class MainActivity extends Activity {
 
         finish();
     }
-}
-
-class Native {
-    static {
-        System.loadLibrary("native-lib");
-    }
-    static native String reply(String data);
 }
