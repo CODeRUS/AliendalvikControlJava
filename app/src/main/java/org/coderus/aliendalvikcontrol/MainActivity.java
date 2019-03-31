@@ -1,4 +1,5 @@
 package org.coderus.aliendalvikcontrol;
+import org.coderus.aliendalvikcontrol.BuildConfig;
 
 import android.app.Activity;
 import android.content.Context;
@@ -161,6 +162,8 @@ public class MainActivity extends Activity {
 
         deviceProperties.put("navbarHeight", navbarHeight);
         deviceProperties.put("api", Build.VERSION.SDK_INT);
+        deviceProperties.put("versionCode", BuildConfig.VERSION_CODE);
+        deviceProperties.put("versionName", BuildConfig.VERSION_NAME);
 
         return deviceProperties;
     }
