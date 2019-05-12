@@ -70,6 +70,11 @@ public class MainActivity extends Activity {
                     json.put("url", url.toString());
                     break;
                 }
+                case "uri": {
+                    final Uri url = receivedIntent.getData();
+                    json.put("default", getDefaultApplication(url));
+                    break;
+                }
                 default: {
                     Log.w(TAG, "Unhandled command type (old helper version?): " + command);
                     break;
@@ -97,9 +102,9 @@ public class MainActivity extends Activity {
         final String mimeType = receivedIntent.getType();
 
         PackageManager pm = getPackageManager();
-        List<ResolveInfo> resolveInfoList = pm.queryIntentActivities(receivedIntent, 0);
+        final List<ResolveInfo> resolveInfoList = pm.queryIntentActivities(receivedIntent, 0);
         JSONArray array = new JSONArray();
-        for (ResolveInfo resolveInfo : resolveInfoList) {
+        for (final ResolveInfo resolveInfo : resolveInfoList) {
             final String packageName = resolveInfo.activityInfo.packageName;
             switch (packageName) {
                 case "org.coderus.aliendalvikcontrol":
@@ -186,9 +191,9 @@ public class MainActivity extends Activity {
         Intent view = new Intent(Intent.ACTION_VIEW);
         view.setData(url);
         PackageManager pm = getPackageManager();
-        List<ResolveInfo> resolveInfoList = pm.queryIntentActivities(view, 0);
+        final List<ResolveInfo> resolveInfoList = pm.queryIntentActivities(view, 0);
         JSONArray array = new JSONArray();
-        for (ResolveInfo resolveInfo : resolveInfoList) {
+        for (final ResolveInfo resolveInfo : resolveInfoList) {
             final String packageName = resolveInfo.activityInfo.packageName;
 //            switch (packageName) {
 //                case "org.coderus.aliendalvikcontrol":
@@ -242,5 +247,49 @@ public class MainActivity extends Activity {
             array.put(resolveObject);
         }
         return array;
+    }
+
+    private JSONObject getDefaultApplication(Uri url) throws JSONException {
+        Intent view = new Intent(Intent.ACTION_VIEW);
+        view.setData(url);
+        view.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        PackageManager pm = getPackageManager();
+        final ResolveInfo resolveInfo = pm.resolveActivity(view, PackageManager.MATCH_DEFAULT_ONLY);
+        String packageName = resolveInfo.activityInfo.packageName;
+        String className = resolveInfo.activityInfo.name;
+        Log.w(TAG, "Resolved intent: " + className);
+        if (className.equals("com.android.internal.app.ResolverActivity")) {
+            final List<ResolveInfo> resolveInfoList = pm.queryIntentActivities(view, PackageManager.MATCH_DEFAULT_ONLY);
+            for (final ResolveInfo defaultResolveInfo : resolveInfoList) {
+                final String resolvePackageName = defaultResolveInfo.activityInfo.packageName;
+                switch (resolvePackageName) {
+                    case "org.coderus.aliendalvikcontrol":
+                    case "com.android.bluetooth":
+                    case "com.myriadgroup.nativeapp":
+                    case "com.myriadgroup.nativeapp.browser":
+                    case "com.myriadgroup.nativeapp.email":
+                    case "com.myriadgroup.nativeapp.messages":
+                        continue;
+                    default:
+                        break;
+
+                }
+                packageName = resolvePackageName;
+                className = defaultResolveInfo.activityInfo.name;
+                Log.w(TAG, "First default intent: " + className);
+                break;
+            }
+        }
+        JSONObject defaultObject = new JSONObject();
+        defaultObject.put("data", url.toString());
+        defaultObject.put("className", className);
+        defaultObject.put("packageName", packageName);
+        final Intent launchIntent = pm.getLaunchIntentForPackage(packageName);
+        if (launchIntent == null) {
+            defaultObject.put("launcherClass", new String());
+        } else {
+            defaultObject.put("launcherClass", launchIntent.getComponent().getClassName());
+        }
+        return defaultObject;
     }
 }
