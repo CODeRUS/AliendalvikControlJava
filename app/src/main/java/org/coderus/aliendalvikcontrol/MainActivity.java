@@ -13,6 +13,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Base64;
 import android.util.Log;
 
@@ -22,7 +23,6 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
-import java.util.Properties;
 
 public class MainActivity extends Activity {
     private static final String TAG = "MainActivity";
@@ -73,6 +73,11 @@ public class MainActivity extends Activity {
                 case "uri": {
                     final Uri url = receivedIntent.getData();
                     json.put("default", getDefaultApplication(url));
+                    break;
+                }
+                case "uptime": {
+                    json.put("payload", receivedIntent.getStringExtra("payload"));
+                    json.put("value", SystemClock.uptimeMillis());
                     break;
                 }
                 default: {
